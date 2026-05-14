@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ghs-master-v10'; // Incremented to v10 to force update
+const CACHE_NAME = 'ghs-master-v11'; // Incremented to v11 to force update of new Index.html logic
 const ASSETS = [
   '/',
   '/index.html',
@@ -38,7 +38,7 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        // If network is available, update the cache and return the response
+        // Update the cache with the newest version from the network
         const clonedResponse = response.clone();
         caches.open(CACHE_NAME).then((cache) => {
           cache.put(event.request, clonedResponse);
@@ -46,7 +46,7 @@ self.addEventListener('fetch', (event) => {
         return response;
       })
       .catch(() => {
-        // If network fails (offline), serve from cache
+        // Fallback to cache if offline
         return caches.match(event.request);
       })
   );
