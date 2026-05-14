@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+    <title>GetHomeSafe SG — Singapore Road Safety</title>
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0a0e1a">
+    <link rel="manifest" href="/manifest.json">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;600;800&display=swap" rel="stylesheet"/>
+    <style>
+        :root { --night: #0a0e1a; --amber: #f5a623; --teal: #2dd4bf; --red: #ef4444; }
+        body { background-color: var(--night); color: #f1f0ec; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .serif { font-family: 'DM Serif Display', serif; }
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .active-tab { color: var(--amber) !important; border-top: 2px solid var(--amber); background: rgba(245, 166, 35, 0.05); }
+        ::-webkit-scrollbar { display: none; }
+        .screen { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .verdict-badge { font-size: 10px; font-weight: 900; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 1px; }
+    </style>
+</head>
+<body class="max-w-md mx-auto min-h-screen flex flex-col relative overflow-x-hidden">
+
+    <nav class="sticky top-0 z-50 glass px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center shadow-lg">
+                <svg class="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+            </div>
+            <div>
+                <h1 class="serif text-xl leading-none">GetHomeSafe</h1>
+                <p class="text-[9px] text-teal-400 font-bold tracking-widest uppercase mt-0.5">Singapore Official</p>
+            </div>
+        </div>
+        <button onclick="go('help')" class="bg-teal-500 text-black px-4 py-2 rounded-full text-[10px] font-extrabold uppercase tracking-widest shadow-lg shadow-teal-500/20 active:scale-95 transition-transform">Book Valet</button>
+    </nav>
+
+    <main class="flex-1 px-6 pb-32">
+        <!-- VERDICT SCREEN -->
+        <section id="screen-bac" class="screen block pt-8">
+            <div class="mb-6">
+                <h2 class="serif text-5xl mb-1">15 Units.</h2>
+                <p class="text-amber-500 font-black text-xs uppercase tracking-widest">Incoming 2026 Legal Limit</p>
+            </div>
+
+            <div class="glass rounded-3xl p-6 mb-6 border-l-4 border-amber-500">
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 block">My Weight (KG)</label>
+                        <input id="weightInput" type="number" value="75" oninput="calculateBAC()" class="bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-xl font-bold w-full outline-none focus:border-amber-500"/>
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 block">Biological Sex</label>
+                        <div class="flex gap-2">
+                            <button id="btnMale" onclick="setGender('male')" class="flex-1 bg-amber-500 text-black py-3 rounded-2xl font-bold text-xs">M</button>
+                            <button id="btnFemale" onclick="setGender('female')" class="flex-1 bg-white/5 border border-white/10 text-gray-400 py-3 rounded-2xl font-bold text-xs">F</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="drinkList" class="space-y-3">
+                    <!-- Results injected via JS -->
+                </div>
+            </div>
+
+            <div class="bg-red-500/10 border border-red-500/20 rounded-3xl p-6 mb-6">
+                <div class="flex justify-between items-start mb-2">
+                    <h3 class="text-red-500 font-black text-xs uppercase tracking-tighter flex items-center gap-2">🚨 HIGH STAKES</h3>
+                    <span class="verdict-badge bg-red-500 text-white">Warning</span>
+                </div>
+                <p class="text-[13px] text-red-200/80 leading-relaxed mb-4">
+                    The 2026 limit is <strong>half</strong> of today's limit. Even <strong>one drink</strong> can put you in the danger zone.
+                </p>
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="bg-black/20 p-3 rounded-xl border border-white/5">
+                        <span class="text-[9px] text-gray-500 uppercase block">Court Fine</span>
+                        <span class="font-bold text-sm text-white">$10,000</span>
+                    </div>
+                    <div class="bg-black/20 p-3 rounded-xl border border-white/5">
+                        <span class="text-[9px] text-gray-500 uppercase block">Licence Ban</span>
+                        <span class="font-bold text-sm text-white">Min 2 Years</span>
+                    </div>
+                </div>
+            </div>
+            
+            <button onclick="go('help')" class="w-full bg-teal-500 text-black py-5 rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-teal-500/10 active:scale-95 transition-transform">
+                Book a Valet Now
+            </button>
+        </section>
+
+        <!-- HELP / VALET SCREEN -->
+        <section id="screen-help" class="screen hidden pt-8">
+            <h2 class="serif text-4xl mb-2">Safe Ride.</h2>
+            <div class="glass rounded-3xl p-5 mb-8 border-l-4 border-teal-500">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-xs font-bold text-teal-400 uppercase tracking-widest">GPS Transmission</h3>
+                    <button id="locationToggleBtn" onclick="toggleLocation()" class="bg-teal-500 text-black px-3 py-1 rounded-full text-[10px] font-black uppercase">ON</button>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div id="gps-indicator" class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
+                    <p id="locationDisplay" class="text-sm font-semibold text-gray-300">Acquiring signal...</p>
+                </div>
+            </div>
+
+            <div id="valetList" class="space-y-4">
+                <!-- Valets injected via JS -->
+            </div>
+
+            <div class="mt-12 mb-8">
+                <h3 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-4">Leave your car? Get a ride</h3>
+                <div class="space-y-3">
+                    <button onclick="window.open('https://www.grab.com/sg/download/', '_blank')" class="w-full glass p-4 rounded-2xl flex items-center justify-between hover:bg-white/10 transition-colors">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 bg-green-500/20 rounded-xl flex items-center justify-center">🟢</div>
+                            <div class="text-left"><h4 class="font-bold text-[13px] text-white">Grab</h4><p class="text-[9px] text-gray-400">Standard ride-hailing</p></div>
+                        </div>
+                        <span class="text-gray-500 text-xs font-bold uppercase">OPEN</span>
+                    </button>
+                    <button onclick="window.open('https://www.gojek.com/sg/', '_blank')" class="w-full glass p-4 rounded-2xl flex items-center justify-between hover:bg-white/10 transition-colors">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 bg-emerald-500/20 rounded-xl flex items-center justify-center">🔵</div>
+                            <div class="text-left"><h4 class="font-bold text-[13px] text-white">Gojek</h4><p class="text-[9px] text-gray-400">Competitive pricing</p></div>
+                        </div>
+                        <span class="text-gray-500 text-xs font-bold uppercase">OPEN</span>
+                    </button>
+                    <button onclick="window.location.href='tel:65521111'" class="w-full glass p-4 rounded-2xl flex items-center justify-between hover:bg-white/10 transition-colors">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 bg-yellow-500/20 rounded-xl flex items-center justify-center">🚖</div>
+                            <div class="text-left"><h4 class="font-bold text-[13px] text-white">ComfortDelGro</h4><p class="text-[9px] text-gray-400">6552 1111 (Direct Dial)</p></div>
+                        </div>
+                        <span class="text-gray-500 text-xs font-bold uppercase">CALL</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- PROFILE SCREEN -->
+        <section id="screen-profile" class="screen hidden pt-8">
+            <h2 class="serif text-4xl mb-2">My Profile.</h2>
+            <p class="text-xs text-gray-400 mb-6">Details are auto-filled for faster valet booking.</p>
+            <div class="space-y-4">
+                <div class="glass p-5 rounded-3xl">
+                    <label class="text-[10px] font-bold text-gray-500 uppercase mb-2 block">Name</label>
+                    <input id="userName" oninput="saveProfile()" type="text" placeholder="Your Name" class="bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm w-full outline-none focus:border-amber-500"/>
+                </div>
+                <div class="glass p-5 rounded-3xl">
+                    <label class="text-[10px] font-bold text-gray-500 uppercase mb-2 block">Car Plate</label>
+                    <input id="carPlate" oninput="saveProfile()" type="text" placeholder="SKA 1234 X" class="bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm w-full outline-none focus:border-amber-500 uppercase"/>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="glass p-5 rounded-3xl">
+                        <label class="text-[10px] font-bold text-gray-500 uppercase mb-2 block">Model & Color</label>
+                        <input id="carModel" oninput="saveProfile()" type="text" placeholder="Silver Civic" class="bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm w-full outline-none focus:border-amber-500"/>
+                    </div>
+                    <div class="glass p-5 rounded-3xl">
+                        <label class="text-[10px] font-bold text-gray-500 uppercase mb-2 block">Transmission</label>
+                        <select id="carTrans" onchange="saveProfile()" class="bg-[#1c2333] border border-white/10 rounded-2xl px-4 py-3 text-sm w-full outline-none focus:border-amber-500">
+                            <option value="Auto">Auto</option>
+                            <option value="Manual">Manual</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="saveStatus" class="text-teal-400 text-[10px] font-bold text-center opacity-0 transition-opacity uppercase tracking-widest">Saved Locally</div>
+            </div>
+        </section>
+
+        <!-- LAWS SCREEN -->
+        <section id="screen-laws" class="screen hidden pt-8">
+            <h2 class="serif text-4xl mb-4">The Law.</h2>
+            <div class="space-y-4">
+                <div class="glass p-6 rounded-3xl border-l-4 border-red-500">
+                    <h4 class="text-red-500 font-bold text-xs uppercase mb-2">Breath Limit</h4>
+                    <p class="text-xs text-gray-300 leading-relaxed mb-2">Today: 35µg per 100ml.</p>
+                    <p class="text-xs text-amber-500 font-bold">2026: 15µg per 100ml.</p>
+                </div>
+                <div class="glass p-6 rounded-3xl">
+                    <h4 class="text-gray-400 font-bold text-xs uppercase mb-2">First Offence</h4>
+                    <p class="text-xs text-gray-300">$1,000 - $10,000 Fine</p>
+                    <p class="text-xs text-gray-300">Up to 12 months Jail</p>
+                    <p class="text-xs text-gray-300">Min 2 years Ban</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- FACTS SCREEN -->
+        <section id="screen-dyk" class="screen hidden pt-8">
+            <h2 class="serif text-4xl mb-4">Facts.</h2>
+            <div class="space-y-4">
+                <div class="glass p-6 rounded-3xl">
+                    <h4 class="text-amber-500 font-bold text-xs uppercase mb-2">Engine Off Myth</h4>
+                    <p class="text-xs text-gray-300 leading-relaxed">Sitting in the driver's seat with the engine off but keys accessible is legally "in charge" of the vehicle. You can be arrested for DUI even if not moving.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SOS SCREEN -->
+        <section id="screen-sos" class="screen hidden pt-8 text-center">
+            <h2 class="serif text-4xl mb-4 text-red-500">Emergency.</h2>
+            <div class="space-y-4 text-left">
+                <button onclick="window.location.href='tel:995'" class="w-full bg-red-600 p-8 rounded-3xl flex justify-between items-center">
+                    <div><p class="font-black text-2xl uppercase text-white">995 Ambulance</p><p class="text-xs text-white opacity-80">Life-threatening / Unconscious</p></div>
+                    <span class="text-3xl">🚑</span>
+                </button>
+                <button onclick="window.location.href='tel:999'" class="w-full glass p-6 rounded-3xl flex justify-between items-center">
+                    <div><p class="font-bold text-xl text-white">999 Police</p><p class="text-xs text-gray-400">Accident / Crime reporting</p></div>
+                    <span class="text-2xl">👮</span>
+                </button>
+                <button id="buddySOSBtn" onclick="shareLocationWithBuddy()" class="w-full bg-teal-500 text-black font-black p-6 rounded-3xl text-center uppercase tracking-widest shadow-xl shadow-teal-500/20">
+                    📍 SMS Location to Buddy
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <nav class="fixed bottom-0 left-0 w-full glass border-t border-white/5 grid grid-cols-6 px-1 pb-10 pt-3 z-50">
+        <button onclick="go('bac')" class="tab-btn flex flex-col items-center gap-1 active-tab" id="tab-bac">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"/></svg>
+            <span class="text-[7px] font-extrabold uppercase">Verdict</span>
+        </button>
+        <button onclick="go('help')" class="tab-btn flex flex-col items-center gap-1 text-gray-500" id="tab-help">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99z"/></svg>
+            <span class="text-[7px] font-extrabold uppercase">Valet</span>
+        </button>
+        <button onclick="go('profile')" class="tab-btn flex flex-col items-center gap-1 text-gray-500" id="tab-profile">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+            <span class="text-[7px] font-extrabold uppercase">Profile</span>
+        </button>
+        <button onclick="go('laws')" class="tab-btn flex flex-col items-center gap-1 text-gray-500" id="tab-laws">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>
+            <span class="text-[7px] font-extrabold uppercase">Laws</span>
+        </button>
+        <button onclick="go('dyk')" class="tab-btn flex flex-col items-center gap-1 text-gray-500" id="tab-dyk">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z"/></svg>
+            <span class="text-[7px] font-extrabold uppercase">Facts</span>
+        </button>
+        <button onclick="go('sos')" class="tab-btn flex flex-col items-center gap-1 text-gray-500" id="tab-sos">
+            <svg class="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2z"/></svg>
+            <span class="text-[7px] font-extrabold uppercase text-red-500">SOS</span>
+        </button>
+    </nav>
+
+    <script>
+        let currentGender = 'male';
+        let locationEnabled = true;
+        let currentCoords = null;
+
+        const DRINK_TYPES = [
+            { icon: '🍺', name: 'Tiger/Heineken', g: 13.5 },
+            { icon: '🍷', name: 'Wine (Glass)', g: 15.4 },
+            { icon: '🥃', name: 'Whisky (Shot)', g: 9.5 },
+            { icon: '🧉', name: 'Soju (Shot)', g: 10.0 },
+            { icon: '🍹', name: 'Cocktail', g: 18.0 }
+        ];
+
+        const VALETS = [
+            { icon: '🧑‍✈️', name: 'iDrive Valet', phone: '81188782', price: '$40' },
+            { icon: '🚘', name: 'Express Valet', phone: '93928577', price: '$45' },
+            { icon: '🤵', name: 'My Chauffeur', phone: '81152345', price: '$48' },
+            { icon: '🌟', name: 'Valet-Ah', phone: '91957086', price: '$38' },
+            { icon: '🌙', name: 'ValetNow', phone: '91234567', price: '$45' },
+            { icon: '🚗', name: 'SG Valet Now', phone: '98765432', price: '$45' },
+            { icon: '🛡️', name: 'Guardians Valet', phone: '94445555', price: '$45' },
+            { icon: '🤝', name: 'Buddy Valet', phone: '96667777', price: '$40' },
+            { icon: '⚓', name: 'Harbour Valet', phone: '91112222', price: '$45' }
+        ];
+
+        function go(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+            document.getElementById('screen-' + screenId).classList.remove('hidden');
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active-tab', 'text-amber-500'));
+            const activeTab = document.getElementById('tab-' + screenId);
+            if (activeTab) activeTab.classList.add('active-tab');
+            window.scrollTo(0,0);
+            if(screenId === 'help') { renderValets(); refreshLocation(); }
+        }
+
+        function setGender(g) {
+            currentGender = g;
+            const btnM = document.getElementById('btnMale');
+            const btnF = document.getElementById('btnFemale');
+            if(g === 'male') {
+                btnM.className = "flex-1 bg-amber-500 text-black py-3 rounded-2xl font-bold text-xs";
+                btnF.className = "flex-1 bg-white/5 border border-white/10 text-gray-400 py-3 rounded-2xl font-bold text-xs";
+            } else {
+                btnF.className = "flex-1 bg-amber-500 text-black py-3 rounded-2xl font-bold text-xs";
+                btnM.className = "flex-1 bg-white/5 border border-white/10 text-gray-400 py-3 rounded-2xl font-bold text-xs";
+            }
+            calculateBAC();
+        }
+
+        function calculateBAC() {
+            const weight = parseFloat(document.getElementById('weightInput').value) || 75;
+            const r = currentGender === 'male' ? 0.68 : 0.55;
+            const container = document.getElementById('drinkList');
+            container.innerHTML = '';
+
+            DRINK_TYPES.forEach(drink => {
+                const targetBAC = 0.034; // Matches 15µg breath limit
+                const safeGrams = (targetBAC * (weight * 1000) * r) / 100;
+                const safeCount = Math.floor(safeGrams / drink.g);
+
+                const div = document.createElement('div');
+                div.className = "flex justify-between items-center bg-white/5 p-4 rounded-2xl border border-white/5";
+                div.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="text-2xl">${drink.icon}</span>
+                        <div>
+                            <span class="text-[10px] font-bold text-gray-400 uppercase block">${drink.name}</span>
+                            <span class="text-[8px] text-amber-500/60 font-bold uppercase tracking-widest">2026 Threshold</span>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <span class="${safeCount <= 0 ? 'text-red-500' : 'text-teal-400'} text-2xl font-black">${safeCount} MAX</span>
+                        <p class="text-[8px] text-gray-500 font-bold uppercase">Safe to drive</p>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function toggleLocation() {
+            locationEnabled = !locationEnabled;
+            const btn = document.getElementById('locationToggleBtn');
+            const display = document.getElementById('locationDisplay');
+            if (locationEnabled) {
+                btn.className = "bg-teal-500 text-black px-3 py-1 rounded-full text-[10px] font-black uppercase";
+                btn.innerText = "ON";
+                refreshLocation();
+            } else {
+                btn.className = "bg-red-500/20 text-red-500 px-3 py-1 rounded-full text-[10px] font-black uppercase";
+                btn.innerText = "OFF";
+                currentCoords = null;
+                display.innerText = "Location Masked";
+            }
+        }
+
+        function refreshLocation() {
+            if (!locationEnabled) return;
+            const display = document.getElementById('locationDisplay');
+            const indicator = document.getElementById('gps-indicator');
+            display.innerText = "Syncing GPS...";
+            indicator.className = "w-2 h-2 rounded-full bg-amber-500 animate-ping";
+
+            navigator.geolocation.getCurrentPosition(pos => {
+                if (!locationEnabled) return;
+                currentCoords = pos.coords;
+                display.innerText = `${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`;
+                indicator.className = "w-2 h-2 rounded-full bg-teal-400";
+            }, err => {
+                display.innerText = "GPS Error: Denied";
+                indicator.className = "w-2 h-2 rounded-full bg-red-500";
+            }, { timeout: 5000 });
+        }
+
+        function renderValets() {
+            const container = document.getElementById('valetList');
+            container.innerHTML = '';
+            VALETS.forEach(v => {
+                const div = document.createElement('div');
+                div.className = "glass p-4 rounded-3xl flex items-center justify-between border-l-4 border-amber-500";
+                div.innerHTML = `
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center text-xl">${v.icon}</div>
+                        <div><h4 class="font-bold text-[13px]">${v.name}</h4><p class="text-[9px] text-gray-400">Est. ${v.price}</p></div>
+                    </div>
+                    <button onclick="bookWA('${v.phone}', '${v.name}')" class="bg-amber-500 text-black px-4 py-3 rounded-xl text-[10px] font-black active:scale-90 transition-transform">BOOK</button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function saveProfile() {
+            const data = {
+                userName: document.getElementById('userName').value,
+                carPlate: document.getElementById('carPlate').value,
+                carTrans: document.getElementById('carTrans').value,
+                carModel: document.getElementById('carModel').value
+            };
+            localStorage.setItem('ghs_master_v1', JSON.stringify(data));
+            const status = document.getElementById('saveStatus');
+            status.classList.remove('opacity-0');
+            setTimeout(() => status.classList.add('opacity-0'), 1500);
+        }
+
+        function bookWA(phone, op) {
+            const p = JSON.parse(localStorage.getItem('ghs_master_v1') || '{}');
+            let msg = `Hi ${op}, I need a valet from GetHomeSafe SG.\n\n`;
+            msg += `PLATE: ${p.carPlate || '---'}\n`;
+            msg += `MODEL: ${p.carModel || '---'}\n`;
+            msg += `NAME: ${p.userName || 'Guest'}\n`;
+            msg += `TRANS: ${p.carTrans || 'Auto'}\n`;
+            
+            if (locationEnabled && currentCoords) {
+                msg += `PICKUP: https://maps.google.com/?q=${currentCoords.latitude},${currentCoords.longitude}`;
+            } else {
+                msg += `PICKUP: (Location share will follow in chat)`;
+            }
+            window.open(`https://wa.me/65${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+        }
+
+        function shareLocationWithBuddy() {
+            if (!currentCoords) { 
+                alert("Acquiring GPS... Please wait 5 seconds and try again.");
+                refreshLocation(); 
+                return; 
+            }
+            const msg = `Emergency: Need help getting home. My location: https://maps.google.com/?q=${currentCoords.latitude},${currentCoords.longitude}`;
+            window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+        }
+
+        window.onload = () => {
+            const p = JSON.parse(localStorage.getItem('ghs_master_v1') || '{}');
+            if(p.userName) document.getElementById('userName').value = p.userName;
+            if(p.carPlate) document.getElementById('carPlate').value = p.carPlate;
+            if(p.carTrans) document.getElementById('carTrans').value = p.carTrans;
+            if(p.carModel) document.getElementById('carModel').value = p.carModel;
+            calculateBAC();
+            refreshLocation();
+        };
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW registration failed'));
+            });
+        }
+    </script>
+</body>
+</html>
