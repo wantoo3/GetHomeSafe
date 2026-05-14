@@ -23,7 +23,6 @@ self.addEventListener('activate', (event) => {
   return self.clients.claim();
 });
 
-// Network-First Strategy: Always check the internet for a fresh version
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
