@@ -1,7 +1,7 @@
 {
   "name": "GetHomeSafe SG",
   "short_name": "GetHomeSafe",
-  "description": "Singapore's Road Safety Companion. Check your limits, book a valet, and get home safely.",
+  "description": "Singapore's Road Safety Companion. Check your limits, know the law, and get home safely.",
   "start_url": "/index.html",
   "display": "standalone",
   "background_color": "#0a0e1a",
