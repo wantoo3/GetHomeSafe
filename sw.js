@@ -1,7 +1,8 @@
-const CACHE_NAME = 'ghs-master-v13'; // Incremented to v13 to clear user cache and load the rotation update
+const CACHE_NAME = 'ghs-master-v14'; // Incremented to v14 to clear old cache and apply the geometric logo fix
 const ASSETS = [
   '/',
   '/index.html',
+  '/logo_generator.html', // Added the new interactive builder utility to cache list
   '/manifest.json',
   '/icon-180.png',
   '/icon-192.png',
@@ -38,7 +39,6 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        // If network is available, update the cache and return the response
         const clonedResponse = response.clone();
         caches.open(CACHE_NAME).then((cache) => {
           cache.put(event.request, clonedResponse);
@@ -46,7 +46,6 @@ self.addEventListener('fetch', (event) => {
         return response;
       })
       .catch(() => {
-        // If network fails (offline), serve from cache
         return caches.match(event.request);
       })
   );
