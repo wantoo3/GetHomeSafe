@@ -43,7 +43,8 @@
                 <p class="text-[9px] text-teal-400 font-bold tracking-widest uppercase mt-0.5">Singapore Official</p>
             </div>
         </div>
-        <button onclick="go('help')" class="bg-teal-500 text-black px-4 py-2 rounded-full text-[10px] font-extrabold uppercase tracking-widest shadow-lg shadow-teal-500/20 active:scale-95 transition-transform">Book Valet</button>
+        <!-- PWA Dynamic Download / Install Action Button -->
+        <button id="pwa-install-btn" onclick="triggerPWAInstall()" class="hidden bg-teal-500 text-black px-4 py-2 rounded-full text-[10px] font-extrabold uppercase tracking-widest shadow-lg shadow-teal-500/20 active:scale-95 transition-transform">Install App</button>
     </nav>
 
     <main class="flex-1 px-6 pb-32">
@@ -245,12 +246,24 @@
         </button>
     </nav>
 
-    <div id="toast" class="fixed top-24 left-1/2 -translate-x-1/2 glass px-6 py-3 rounded-full text-xs font-bold transition-all opacity-0 pointer-events-none z-[100]"></div>
+    <!-- PWA Install Helper Modal -->
+    <div id="pwa-modal" class="fixed inset-0 bg-black/70 backdrop-blur-md z-[200] hidden items-center justify-center p-6" onclick="closePWAModal(event)">
+        <div class="glass max-w-sm w-full rounded-3xl p-6 text-center border border-white/10 relative" onclick="event.stopPropagation()">
+            <button onclick="closePWAModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl font-bold leading-none">&times;</button>
+            <div class="w-12 h-12 bg-teal-500/20 text-teal-400 rounded-full flex items-center justify-center mx-auto mb-4 text-xl">📱</div>
+            <h3 class="serif text-xl mb-2 text-white">Install App</h3>
+            <div id="pwa-modal-instructions" class="mb-6 text-left">
+                <!-- Injected via Javascript -->
+            </div>
+            <button onclick="closePWAModal()" class="w-full bg-teal-500 text-black py-3 rounded-2xl font-black text-xs uppercase tracking-widest active:scale-95 transition-transform">Got It</button>
+        </div>
+    </div>
 
     <script>
         let currentGender = 'male';
         let locationEnabled = false;
         let currentCoords = null;
+        let deferredPrompt = null; // Store native PWA installation event
 
         const DRINK_TYPES = [
             { icon: '🍺', name: 'Tiger/Heineken', g: 13.5 },
@@ -331,6 +344,83 @@
             }
         }
 
+        // PWA DYNAMIC INSTALLATION LOGIC
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+
+        // Catch native install prompt triggers
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e; // Store prompt trigger
+            const installBtn = document.getElementById('pwa-install-btn');
+            if (installBtn && !isStandalone) {
+                installBtn.classList.remove('hidden'); // Expose button directly
+            }
+        });
+
+        function triggerPWAInstall() {
+            const installBtn = document.getElementById('pwa-install-btn');
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        if (installBtn) installBtn.classList.add('hidden');
+                    }
+                    deferredPrompt = null;
+                });
+            } else {
+                // Display user-friendly walkthrough modal (crucial fallback for iOS Safari)
+                showPWAModalInstructions();
+            }
+        }
+
+        function showPWAModalInstructions() {
+            const modal = document.getElementById('pwa-modal');
+            const container = document.getElementById('pwa-modal-instructions');
+            if (!modal || !container) return;
+
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+            let markup = '';
+            if (isIOS) {
+                markup = `
+                    <p class="text-xs text-gray-300 mb-3">Install **GetHomeSafe SG** directly on your iPhone to access it anytime:</p>
+                    <ol class="text-xs text-gray-400 space-y-2.5 list-decimal pl-4">
+                        <li>Tap the <strong class="text-teal-400">Share</strong> button at the bottom navigation panel of your Safari browser (looks like an upward arrow escaping a box).</li>
+                        <li>Scroll down and tap <strong class="text-teal-400">Add to Home Screen</strong>.</li>
+                        <li>Confirm by tapping <strong class="text-teal-400">Add</strong> in the top-right corner to pin the app interface.</li>
+                    </ol>
+                `;
+            } else {
+                markup = `
+                    <p class="text-xs text-gray-300 mb-3">Add **GetHomeSafe SG** to your devices' home screen:</p>
+                    <ol class="text-xs text-gray-400 space-y-2.5 list-decimal pl-4">
+                        <li>Click your browser's <strong class="text-teal-400">Menu</strong> icon (typically three dots or an arrow in the top-right corner).</li>
+                        <li>Tap <strong class="text-teal-400">Install app</strong> or <strong class="text-teal-400">Add to Home Screen</strong>.</li>
+                        <li>Confirm the system pop-up to complete the install.</li>
+                    </ol>
+                `;
+            }
+
+            container.innerHTML = markup;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closePWAModal() {
+            const modal = document.getElementById('pwa-modal');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+
+        window.addEventListener('appinstalled', () => {
+            const installBtn = document.getElementById('pwa-install-btn');
+            if (installBtn) installBtn.classList.add('hidden');
+            showToast("GetHomeSafe SG was installed successfully!");
+        });
+
+        // App navigation
         function go(screenId) {
             document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
             document.getElementById('screen-' + screenId).classList.remove('hidden');
@@ -384,7 +474,6 @@
             const container = document.getElementById('valetList');
             container.innerHTML = '';
             
-            // Generate a randomly shuffled copy of VALETS to ensure equal visual exposure
             const shuffledValets = [...VALETS].sort(() => Math.random() - 0.5);
 
             shuffledValets.forEach(v => {
@@ -440,7 +529,6 @@
                 pickupLocation = `at (Location share will follow in chat)`;
             }
 
-            // High-attribution message explicitly pointing to GetHomeSafe.sg
             let msg = `Hi ${providerName}, I am referred to you by GetHomeSafe.sg platform. I am ${userName}. My vehicle details: Plate ${carPlate}, ${carColor} ${carModel} (${carTrans} Trans). Pickup location is ${pickupLocation}. Can I get a Valet driver?`;
             
             window.open(`https://wa.me/65${phone}?text=${encodeURIComponent(msg)}`, '_blank');
@@ -522,6 +610,15 @@
             calculateBAC();
         }
 
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            if (toast) {
+                toast.innerText = msg;
+                toast.classList.remove('opacity-0');
+                setTimeout(() => toast.classList.add('opacity-0'), 3000);
+            }
+        }
+
         window.onload = () => {
             const p = JSON.parse(localStorage.getItem('ghs_pro_v3') || '{"userWeight":85, "userGender":"male"}');
             if(p.userName) document.getElementById('userName').value = p.userName;
@@ -537,6 +634,12 @@
             
             // Dynamic Logo trigger
             generateAppLogo();
+
+            // PWA install visibility fallback check
+            const installBtn = document.getElementById('pwa-install-btn');
+            if (installBtn && !isStandalone) {
+                installBtn.classList.remove('hidden'); // Ensure action trigger is visible initially
+            }
         };
 
         if ('serviceWorker' in navigator) {
